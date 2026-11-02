@@ -1,0 +1,22 @@
+name: Build APK
+on: [push, workflow_dispatch]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 17 }
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+        with: { gradle-version: 8.9 }
+      - name: Unpack
+        run: |
+          if [ -f mdm-kotlin.zip ]; then unzip -q mdm-kotlin.zip; fi
+          echo "DIR=$( [ -d mdmk ] && echo mdmk || echo . )" >> $GITHUB_ENV
+      - run: gradle assembleRelease --no-daemon
+        working-directory: ${{ env.DIR }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MDM-apk
+          path: ${{ env.DIR }}/app/build/outputs/apk/release/*.apk
